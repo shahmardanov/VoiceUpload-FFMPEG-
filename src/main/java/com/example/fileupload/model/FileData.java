@@ -17,7 +17,9 @@ public class FileData {
     private Long id;
     private String fileName;
     private String fileType;
+    private String compressedFileUrl;
 
     @Lob
+    @Column(length = 20971520)
     private byte[] data;
 }
