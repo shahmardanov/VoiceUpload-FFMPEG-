@@ -15,6 +15,7 @@ public class FileData {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true)
     private String fileName;
     private String fileType;
     private String compressedFileUrl;

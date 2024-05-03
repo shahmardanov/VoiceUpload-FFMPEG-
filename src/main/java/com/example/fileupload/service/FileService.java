@@ -1,40 +1,48 @@
 package com.example.fileupload.service;
 
-import com.example.fileupload.model.FileData;
-import com.example.fileupload.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.TikaInputStream;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
+import net.bramp.ffmpeg.FFmpeg;
+import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import org.springframework.stereotype.Service;
-import org.xml.sax.SAXException;
 
 import java.io.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
 public class FileService {
 
-    private final FileRepository fileRepository;
 
-    public void convertWavToAac(String inputFilePath, String outputFilePath, int bitrate) throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        // Adjust the path to ffmpeg executable accordingly
-        processBuilder.command("ffmpeg", "-i", inputFilePath, "-b:a", bitrate + "k", outputFilePath);
-        processBuilder.redirectErrorStream(true);
+    public void convertToAAC(String inputFilePath, String outputFilePath) throws IOException {
+        // Create FFmpeg instance
+        FFmpeg ffmpeg = new FFmpeg();
 
-        Process process = processBuilder.start();
+        // Define FFmpeg command for audio conversion to AAC format
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .setInput(inputFilePath)
+                .overrideOutputFiles(true)
+                .addOutput(outputFilePath)
+                .setAudioCodec("aac")
+                .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL) // For AAC codec
+                .done();
 
-        // Wait for the conversion to finish
-        process.waitFor();
+        // Run FFmpeg command
+        try {
+            ffmpeg.run(builder);
+
+            // Delete the original file after successful conversion
+            File originalFile = new File(inputFilePath);
+            if (originalFile.exists()) {
+                originalFile.delete();
+            }
+        } catch (IOException e) {
+            File originalFile = new File(inputFilePath);
+            originalFile.delete();
+            throw new IOException("Error occurred during audio conversion: " + e.getMessage());
+        }
+        }
     }
 
-}
+
 
 
 
