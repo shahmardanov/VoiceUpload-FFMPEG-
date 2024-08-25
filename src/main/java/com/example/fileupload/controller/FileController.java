@@ -1,5 +1,6 @@
 package com.example.fileupload.controller;
 
+import com.example.fileupload.exception.handler.VoiceNotFoundException;
 import com.example.fileupload.service.FileService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -48,41 +49,20 @@ public class FileController {
 
     @GetMapping("/audio/audioId/{id}")
     public ResponseEntity<Resource> getFileById(@PathVariable Long id) {
-        try {
-            File file = fileService.getFileById(id);
-            if (file.exists()) {
-                Resource resource = new FileSystemResource(file);
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .body(resource);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new FileSystemResource("Fayl tapılmadı."));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new FileSystemResource("Fayl axtarışında xəta baş verdi."));
-        }
+        File file = fileService.getFileById(id);
+        Resource resource = new FileSystemResource(file);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
-
 
     @GetMapping("/audio/audioName/{fileName}")
     public ResponseEntity<Resource> getFileByName(@PathVariable String fileName) {
-        try {
-            File file = fileService.getFileByName(fileName);
-            if (file.exists()) {
-                Resource resource = new FileSystemResource(file);
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .body(resource);
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new FileSystemResource("Fayl tapılmadı."));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new FileSystemResource("Fayl axtarışında xəta baş verdi."));
-        }
+        File file = fileService.getFileByName(fileName);
+        Resource resource = new FileSystemResource(file);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
 

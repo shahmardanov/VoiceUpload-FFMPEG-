@@ -68,20 +68,30 @@ public class FileService {
 
     public File getFileById(Long id) throws VoiceNotFoundException {
         FileData fileData = fileRepository.findById(id)
-                .orElseThrow(() -> new VoiceNotFoundException("Fayl tapılmadı"));
+                .orElseThrow(() -> new VoiceNotFoundException("ID ilə fayl tapılmadı: " + id));
 
         String filePath = Paths.get(uploadDir, fileData.getFileName()).toString();
 
-        return new File(filePath);
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new VoiceNotFoundException("Diskdə fayl tapılmadı: " + filePath);
+        }
+
+        return file;
     }
 
     public File getFileByName(String fileName) throws VoiceNotFoundException {
         FileData fileData = fileRepository.findByFileName(fileName)
-                .orElseThrow(() -> new VoiceNotFoundException("Bu adda bir fayl tapılmadı"));
+                .orElseThrow(() -> new VoiceNotFoundException("Bu adda bir fayl tapılmadı: " + fileName));
 
         String filePath = Paths.get(uploadDir, fileData.getFileName()).toString();
 
-        return new File(filePath);
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new VoiceNotFoundException("Diskdə fayl tapılmadı: " + filePath);
+        }
+
+        return file;
     }
 
     public void deleteFileById(Long id) {
