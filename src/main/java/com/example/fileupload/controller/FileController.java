@@ -1,61 +1,110 @@
 package com.example.fileupload.controller;
 
-import com.example.fileupload.model.AppConfig;
-import com.example.fileupload.model.FileData;
-import com.example.fileupload.repository.FileRepository;
 import com.example.fileupload.service.FileService;
-import lombok.RequiredArgsConstructor;
-import net.bramp.ffmpeg.FFmpeg;
-import net.bramp.ffmpeg.FFmpegExecutor;
-import net.bramp.ffmpeg.builder.FFmpegBuilder;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.UUID;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/api")
-@RequiredArgsConstructor
+@RequestMapping("/api/uploads")
 public class FileController {
 
     private final FileService fileService;
 
+    public FileController(FileService fileService) {
+        this.fileService = fileService;
+    }
 
-    @PostMapping("/upload")
-    public String uploadAndConvertToAAC(@RequestParam("file") MultipartFile file) {
+    @PostMapping("/audio")
+    public ResponseEntity<String> uploadAndConvertToAAC(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return "Please select a file to upload.";
+            return ResponseEntity.badRequest().body("File is missing.");
         }
 
         try {
-            // Save the uploaded file to a directory on the server
-            String uploadDir = "C:\\JavaFiles"; // Change this to your desired directory
-            UUID uuid = UUID.randomUUID();
-            String fileName = uuid.toString();
-            String filePath = uploadDir + File.separator + fileName;
-            File dest = new File(filePath);
-            file.transferTo(dest);
+            String fileName = file.getOriginalFilename();
+            if (fileName == null) {
+                return ResponseEntity.badRequest().body("Fayl adı tapılmadı.");
+            }
 
-            // Define output file path for AAC conversion
-            String outputFilePath = uploadDir + File.separator + fileName + ".aac";
+            String filePath = "C:/JavaFiles/" + fileName;
+            file.transferTo(new File(filePath));
 
-            // Convert the uploaded audio file to AAC format
-            fileService.convertToAAC(filePath, outputFilePath);
+            fileService.convertToAAC(filePath);
 
-            return "Audio file uploaded and converted to AAC format successfully!";
+            return ResponseEntity.ok("Audio fayl yükləndi və uğurla AAC formatına çevrildi!");
+
         } catch (IOException e) {
-            return "Error occurred during file upload or audio conversion: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Faylın yüklənməsi və ya audio çevrilməsi zamanı xəta baş verdi.");
         }
     }
+
+    @GetMapping("/audio/audioId/{id}")
+    public ResponseEntity<Resource> getFileById(@PathVariable Long id) {
+        try {
+            File file = fileService.getFileById(id);
+            if (file.exists()) {
+                Resource resource = new FileSystemResource(file);
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .body(resource);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new FileSystemResource("Fayl tapılmadı."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new FileSystemResource("Fayl axtarışında xəta baş verdi."));
+        }
+    }
+
+
+    @GetMapping("/audio/audioName/{fileName}")
+    public ResponseEntity<Resource> getFileByName(@PathVariable String fileName) {
+        try {
+            File file = fileService.getFileByName(fileName);
+            if (file.exists()) {
+                Resource resource = new FileSystemResource(file);
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .body(resource);
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new FileSystemResource("Fayl tapılmadı."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new FileSystemResource("Fayl axtarışında xəta baş verdi."));
+        }
+    }
+
+
+    @DeleteMapping("/audio/audioId/{id}")
+    public ResponseEntity<String> deleteFileById(@PathVariable Long id) {
+        try {
+            fileService.deleteFileById(id);
+            return ResponseEntity.ok("Fayl uğurla silindi.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Fayl silinərkən xəta baş verdi:");
+        }
+    }
+
+    @DeleteMapping("/audio/audioName/{fileName}")
+    public ResponseEntity<String> deleteFileByName(@PathVariable String fileName) {
+        try {
+            fileService.deleteFileByName(fileName);
+            return ResponseEntity.ok("Fayl uğurla silindi.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Fayl silinərkən xəta baş verdi.");
+        }
+    }
+
 }
 

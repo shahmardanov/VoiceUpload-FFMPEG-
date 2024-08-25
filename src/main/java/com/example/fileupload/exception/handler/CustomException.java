@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class CustomException {
 
     @ExceptionHandler(VoiceNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ProblemDetail handlerUserNotFoundException(VoiceNotFoundException exception) {
-        log.error("handlerVoiceNotFoundException {}", exception.getMessage());
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ProblemDetail handleVoiceNotFoundException(VoiceNotFoundException exception) {
+        log.error("VoiceNotFoundException occurred: {}", exception.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
     }
 }
